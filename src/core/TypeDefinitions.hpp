@@ -255,6 +255,8 @@ public:
 	auto operator<=>(const Vector3D& other) const = default;
 };
 
+MAKE_SHARED_NAME(Vector3D);
+
 static Vector3D
 operator*(const Vector3D& vector, const float& scalar)
 {
@@ -263,14 +265,22 @@ operator*(const Vector3D& vector, const float& scalar)
     return scaledVector;
 }
 
+static Vector3D
+operator-(const Vector3D& vectorA, const Vector3D& vectorB)
+{
+	Vector3D vectorC = vectorA;
+	vectorC.dx -= vectorB.dx;
+	vectorC.dy -= vectorB.dy;
+	vectorC.dz -= vectorB.dz;
+	return vectorC;
+}
+
 static std::ostream&
 operator<<(std::ostream& out, const Vector3D& vector)
 {
 	out << "(dx: " << std::to_string(vector.dx) << ", dy: " << std::to_string(vector.dy) << ", dz: " << std::to_string(vector.dz) << ")";
 	return out;
 }
-
-MAKE_SHARED_NAME(Vector3D);
 
 
 /** Ray **/
@@ -291,6 +301,19 @@ public:
 	{
 		Vector3D rayVector(origin, viewWindowIntersection);
 		direction = rayVector.Normalize();
+	}
+
+	[[nodiscard]] Ray
+	Invert() const
+	{
+		Ray invertedRay;
+
+		invertedRay.origin.x = this->origin.x + this->direction.dx;
+		invertedRay.origin.y = this->origin.y + this->direction.dy;
+		invertedRay.origin.z = this->origin.z + this->direction.dz;
+		invertedRay.direction = Vector3D(invertedRay.origin, this->origin);
+
+		return invertedRay;
 	}
 
 	[[nodiscard]] std::optional<float>
@@ -406,6 +429,25 @@ public:
 		__builtin_unreachable();
 	}
 
+	constexpr ColorRGB&
+	operator+=(const ColorRGB& other)
+	{
+		const auto clampColor = [](const uint32_t& value, const uint8_t& min, const uint8_t& max) -> uint8_t {
+			if (value > max)
+				return max;
+			else if (value < min)
+				return min;
+			else
+				return value;
+		};
+
+		red = clampColor(red + other.red, 0, 255);
+		green = clampColor(green + other.green, 0, 255);
+		blue = clampColor(blue + other.blue, 0, 255);
+
+		return *this;
+	}
+
 	auto operator<=>(const ColorRGB& other) const = default;
 
 private:
@@ -429,6 +471,8 @@ struct MaterialProps {
 	float matteMagnitude;				// kd
 	float shinyMagnitude;				// ks
 	float specularHighlightFocus;		// n
+	float opacity;						// α
+	float refractionIndex;				// η
 };
 
 static std::ostream&

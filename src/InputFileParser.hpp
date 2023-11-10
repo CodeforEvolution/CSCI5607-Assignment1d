@@ -33,7 +33,7 @@ private:
 	bool parse_up_direction(std::string_view line, Vector3D& parsedDirection);
 	bool parse_vertical_fov(std::string_view line, float& parsedAngle);
 	bool parse_image_size(std::string_view line, Size& parsedSize);
-	bool parse_background_color(std::string_view line, ColorRGB& parsedColor);
+	bool parse_background_color(std::string_view line, ColorRGB& parsedColor, float& parsedRefractionIndex);
 	bool parse_legacy_material_color(std::string_view line, ColorRGB& parsedColor);
 	bool parse_sphere(std::string_view line, Point3D& parsedCenter, float& parsedRadius);
 	// Optional Assignment 1A

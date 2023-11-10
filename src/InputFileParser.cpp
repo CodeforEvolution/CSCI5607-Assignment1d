@@ -210,7 +210,7 @@ InputFileParser::Parse(SceneDefinition& definition)
 
 			case TOKEN_BACKGROUND_COLOR:
 			{
-				if (!parse_background_color(currentLine, definition.backgroundColor)) {
+				if (!parse_background_color(currentLine, definition.backgroundColor, definition.refractionIndexBgColor)) {
 					std::cerr << "Error: Failed to parse background color line: " << currentLine << std::endl;
 					return false;
 				}
@@ -561,7 +561,7 @@ InputFileParser::parse_image_size(std::string_view line, Size& parsedSize)
 }
 
 bool
-InputFileParser::parse_background_color(std::string_view line, ColorRGB& parsedColor)
+InputFileParser::parse_background_color(std::string_view line, ColorRGB& parsedColor, float& parsedRefractionIndex)
 {
 	std::istringstream stream(line.data());
 
@@ -584,6 +584,10 @@ InputFileParser::parse_background_color(std::string_view line, ColorRGB& parsedC
 	stream >> colorValue;
 
 	parsedColor.blue = (uint8_t)roundf(colorValue * 255);
+
+	// Refraction Index (Assignment 1D)
+	stream >> parsedRefractionIndex;
+
 
 	return !stream.fail();
 }
@@ -689,6 +693,12 @@ InputFileParser::parse_material_properties(std::string_view line, MaterialProps&
 
 	// Specular Highlight Focus
 	stream >> parsedMaterial.specularHighlightFocus;
+
+	// Opacity
+	stream >> parsedMaterial.opacity;
+
+	// Refraction Index
+	stream >> parsedMaterial.refractionIndex;
 
 	return !stream.fail();
 }

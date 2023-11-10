@@ -15,7 +15,7 @@
 // originating at the camera/eye position. 'scene' defines all the objects, lights, their properties, camera information,
 // and to ensure the returned pixel color accounts for shadows, material properties, light colors, and more.
 ColorRGB
-GraphicsEngine::TraceWithRay(const Ray& ray, const SceneDefinition& scene)
+GraphicsEngine::TraceWithRay(const Ray& ray, const SceneDefinition& scene, uint32_t depth)
 {
 	float closestDistance = std::numeric_limits<float>::max();
 	int64_t closestObjectIndex = -1;
@@ -25,7 +25,6 @@ GraphicsEngine::TraceWithRay(const Ray& ray, const SceneDefinition& scene)
 
 		// Do the intersection test with the ray and the current object!
 		std::optional<Point3D> currentIntersect = currentObject->IntersectWith(ray, nullptr);
-
 		if (!currentIntersect.has_value())
 			continue;
 
@@ -43,7 +42,7 @@ GraphicsEngine::TraceWithRay(const Ray& ray, const SceneDefinition& scene)
 	if (closestObjectIndex == -1)
 		return scene.backgroundColor;
 
-	return ShadeWithRay(ray, scene.objectList[closestObjectIndex], closestIntersectPoint, scene.lightList, scene.objectList);
+	return ShadeWithRay(ray, scene.objectList[closestObjectIndex], closestIntersectPoint, scene, depth);
 }
 
 
@@ -85,7 +84,7 @@ static constexpr bool shadowMode = false;
 //  - lights: All the lights in the scene. They will be tested to see if their light reaches 'intersectionPoint'.
 //  - objects: All the objects in the scene. They will be tested to see if their presence blocks incoming light and cast a shadow.
 ColorRGB
-GraphicsEngine::ShadeWithRay(const Ray& ray, const SharedObject& objectHit, const Point3D& intersectionPoint, const std::vector<SharedLight>& lights, const std::vector<SharedObject>& objects)
+GraphicsEngine::ShadeWithRay(const Ray& ray, const SharedObject& objectHit, const Point3D& intersectionPoint, const SceneDefinition& scene, uint32_t depth)
 {
 	// Blinn-Phong Illumination Equation
 	std::optional<Vector3D> maybeN = objectHit->SurfaceNormal(intersectionPoint);
@@ -95,6 +94,20 @@ GraphicsEngine::ShadeWithRay(const Ray& ray, const SharedObject& objectHit, cons
 	}
 	Vector3D& vectorN = maybeN.value();
 
+	// I - Faces outward, points from intersection point to incoming ray origin
+	Vector3D vectorI = Vector3D(intersectionPoint, ray.origin);
+	vectorI.NormalizeSelf();
+
+	// a - cos(theta_i) = N dot I
+	float a = vectorN.DotProduct(vectorI);
+
+	// R - Reflected Ray Direction
+	Vector3D vectorR = (vectorN * a * 2.f) - vectorI;
+
+	// F_r - Fresnel Reflectance
+	float Fo = powf((objectHit->material.refractionIndex - 1.f) / (objectHit->material.refractionIndex + 1.f), 2.f);
+	float Fr = Fo + (1.f - Fo) * powf((1.f - a), 5.f);
+
 	const MaterialProps& objMat = objectHit->material;
 	const ColorRGB intrinsicColor = objectHit->GetIntrinsicColorAtSurfacePoint(intersectionPoint);
 	auto phongIllumination = [&](const ColorRGB::Component colorComponent)
@@ -103,10 +116,9 @@ GraphicsEngine::ShadeWithRay(const Ray& ray, const SharedObject& objectHit, cons
         const float Os = objMat.specularHighlightColor.ToFloat(colorComponent);
 
         float lightSum = 0.0f;
-		for (const auto& light : lights)
-		{
+		for (const auto& light : scene.lightList) {
 			// Is the light blocked?
-			float shadow = CalculateShadow(intersectionPoint, light, objectHit, objects);
+			float shadow = CalculateShadow(intersectionPoint, light, objectHit, scene.objectList);
 
 			Vector3D vectorL = light->CalculateL(intersectionPoint).value();
 
@@ -117,9 +129,14 @@ GraphicsEngine::ShadeWithRay(const Ray& ray, const SharedObject& objectHit, cons
 			Vector3D vectorH = vectorL + vectorV;
 			vectorH.NormalizeSelf();
 
+			float& vectorRPart = (colorComponent == ColorRGB::Component::RED) ? (vectorR.dx) :
+								 (colorComponent == ColorRGB::Component::GREEN) ? (vectorR.dy) :
+								 (vectorR.dz);
+
 			const float lightColor = light->color.ToFloat(colorComponent);
             const float currentLight = shadow * lightColor * ((objMat.matteMagnitude * Od * std::max(0.f, vectorN.DotProduct(vectorL)))
-                    + (objMat.shinyMagnitude * Os * powf(std::max(0.f, vectorN.DotProduct(vectorH)), objMat.specularHighlightFocus)));
+                    + (objMat.shinyMagnitude * Os * powf(std::max(0.f, vectorN.DotProduct(vectorH)), objMat.specularHighlightFocus)))
+					+ (vectorRPart * Fr);
 
 			if constexpr (!shadowMode)
 				lightSum += currentLight;
@@ -127,7 +144,7 @@ GraphicsEngine::ShadeWithRay(const Ray& ray, const SharedObject& objectHit, cons
 				lightSum += shadow;
 		}
 
-		float illumination = 0.0f;
+		float illumination;
 		if constexpr (!shadowMode)
 			illumination = (objMat.diffuseReflectionMagnitude * Od) + lightSum;
 		else
@@ -138,9 +155,20 @@ GraphicsEngine::ShadeWithRay(const Ray& ray, const SharedObject& objectHit, cons
 		return illumination;
 	};
 
-	float illuminationRed = phongIllumination(ColorRGB::Component::RED);
-	float illuminationGreen = phongIllumination(ColorRGB::Component::GREEN);
-	float illuminationBlue = phongIllumination(ColorRGB::Component::BLUE);
+	auto illuminationColor = ColorRGB(phongIllumination(ColorRGB::Component::RED),
+									  phongIllumination(ColorRGB::Component::GREEN),
+									  phongIllumination(ColorRGB::Component::BLUE));
+	if (depth > 0) {
+//		if (depth == 1)
+//			std::cerr << "Depth == 1" << std::endl;
 
-	return {illuminationRed, illuminationGreen, illuminationBlue};
+		Ray reflectedRay;
+		reflectedRay.origin = intersectionPoint + (vectorN * 0.0001f);
+		reflectedRay.direction = vectorR;
+
+		depth--;
+		illuminationColor += TraceWithRay(reflectedRay, scene, depth);
+	}
+
+	return illuminationColor;
 }

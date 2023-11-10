@@ -21,6 +21,8 @@ struct SceneDefinition {
 	float fovVertical;
 	Size imagePixelSize;
 	ColorRGB backgroundColor;
+	float refractionIndexBgColor;
+
 	float frustumHeight;
 
 	// Objects
@@ -195,9 +197,9 @@ public:
 	GraphicsEngine() = delete;
 
     // Check GraphicsEngine.cpp for information!
-	static ColorRGB TraceWithRay(const Ray& ray, const SceneDefinition& scene);
+	static ColorRGB TraceWithRay(const Ray& ray, const SceneDefinition& scene, uint32_t depth = 0);
 	static float CalculateShadow(const Point3D& startPoint, const SharedLight& lightToCheck, const SharedObject& targetObject, const std::vector<SharedObject>& objects);
-	static ColorRGB ShadeWithRay(const Ray& ray, const SharedObject& objectHit, const Point3D& intersectionPoint, const std::vector<SharedLight>& lights, const std::vector<SharedObject>& objects);
+	static ColorRGB ShadeWithRay(const Ray& ray, const SharedObject& objectHit, const Point3D& intersectionPoint, const SceneDefinition& scene, uint32_t depth = 0);
 };
 
 

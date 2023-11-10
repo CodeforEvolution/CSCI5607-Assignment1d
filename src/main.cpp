@@ -200,6 +200,9 @@ int main(int argc, char* argv[])
 	Ray wildRay{};
 	wildRay.origin = scene.eyePosition;
 
+	// The depth to use!
+	constexpr uint32_t depthChoice = 3;
+
 	std::size_t currentPixelIndex = 0;
 	for (uint32_t currentY = 0; currentY < scene.imagePixelSize.height; currentY++) {
 		for (uint32_t currentX = 0; currentX < scene.imagePixelSize.width; currentX++) {
@@ -211,7 +214,7 @@ int main(int argc, char* argv[])
 
 			// Determine objects intersected by ray &
 			// which intersected object is closest to the camera!
-			pixelBuffer[currentPixelIndex] = GraphicsEngine::TraceWithRay(wildRay, scene);
+			pixelBuffer[currentPixelIndex] = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
 			currentPixelIndex++;
 		}
 	}
