@@ -1,16 +1,17 @@
 // Assignment 1c - Triangles and Textures
 // Work by Jacob Secunda
-#ifndef ASSIGNMENT1B_LIGHTANDSHADOW_OBJECT_HPP
-#define ASSIGNMENT1B_LIGHTANDSHADOW_OBJECT_HPP
+#ifndef OBJECT_H
+#define OBJECT_H
 
 #include <filesystem>
+#include <memory>
 
+#include "Ray.hpp"
 #include "TypeDefinitions.hpp"
-#include "Texture.hpp"
-#include "TextureCache.hpp"
+#include "Vector3D.hpp"
 
 /** Object */
-struct Object {
+class Object {
 public:
 	MaterialProps material;
     std::filesystem::path texturePath;
@@ -38,7 +39,7 @@ public:
 
 	// Description: Returns the point of intersection if there is an intersection between 'ray' and this Object.
     // Otherwise, nothing is returned.
-	[[gnu::always_inline]] [[nodiscard]] virtual std::optional<Point3D> IntersectWith(const Ray& ray, float* intersectionTime) const = 0;
+	[[nodiscard]] virtual std::optional<Point3D> IntersectWith(const Ray& ray, float* intersectionTime) const = 0;
 
 	// Description: Calculates the vector N that originates at 'surfacePoint' and is perpendicular to this Object's surface.
 	[[nodiscard]] virtual std::optional<Vector3D> SurfaceNormal(const std::optional<Point3D>& surfacePoint) const = 0;
@@ -64,12 +65,12 @@ protected:
 			:
             material(),
 			type(type),
-            id(nextID++)
+            id(sNextID++)
 	{
 	}
 
 private:
-    static uint32_t nextID;
+    static uint32_t sNextID;
 };
 
 MAKE_SHARED_NAME(Object);
@@ -85,7 +86,8 @@ operator<<(std::ostream& out, const Object& object)
 
 /** Sphere */
 
-struct Sphere : Object {
+class Sphere : public Object {
+public:
 	Point3D center;
 	float radius;
 
@@ -117,15 +119,17 @@ public:
 		float b = 2.f * (ray.direction.dx * (ray.origin.x - center.x) + ray.direction.dy * (ray.origin.y - this->center.y) + ray.direction.dz * (ray.origin.z - this->center.z));
 		float c = powf(ray.origin.x - this->center.x, 2.f) + powf(ray.origin.y - this->center.y, 2.f) + powf(ray.origin.z - this->center.z, 2.f) - powf(this->radius, 2.f);
 
-		float discriminant = powf(b, 2.f) - (4.f * c);
+		float discriminant = (b * b) - (4.f * c);
 
 		// Check if discriminant is negative; This implies no intersection!
 		if (std::signbit(discriminant) && std::fpclassify(discriminant) != FP_ZERO) {
 			return {};
 		}
 
-		float t1 = ((-1.f * b) + sqrtf(discriminant)) / 2.f;
-		float t2 = ((-1.f * b) - sqrtf(discriminant)) / 2.f;
+		const float sqrtDiscrim = sqrtf(discriminant);
+		const float negB = b * -1.f;
+		float t1 = ((negB) + sqrtDiscrim) / 2.f;
+		float t2 = ((negB) - sqrtDiscrim) / 2.f;
 
 		// Check for smallest positive t, which indicates the intersection we care about!
 		Vector3D tempVector = ray.direction;
@@ -160,33 +164,7 @@ public:
 	}
 
     // Description: Refer to the Object struct.
-    [[nodiscard]] ColorRGB GetIntrinsicColorAtSurfacePoint(const Point3D& surfacePoint) const override
-    {
-        if (texturePath.empty())
-            return material.intrinsicColor;
-
-        Vector3D N = *SurfaceNormal(surfacePoint);
-        float phi = std::acos(N.dz);
-        float theta = std::atan2(N.dy, N.dx);
-
-        float u = 0.f;
-        if (theta >= 0.f)
-            u = theta * 0.5f * std::numbers::inv_pi_v<float>;
-        else
-            u = (theta + (2.f * std::numbers::pi_v<float>)) * 0.5f * std::numbers::inv_pi_v<float>;
-
-        float v = phi * std::numbers::inv_pi_v<float>;
-
-        SharedTexture objectTexture;
-        if (!TextureCache::Instance().GetTexture(texturePath, objectTexture))
-            return {};
-
-        ColorRGB pixelOut;
-        if (!objectTexture->GetPixelWithTextureCoordinate(u, v, pixelOut))
-            return {};
-
-        return pixelOut;
-    }
+    [[nodiscard]] ColorRGB GetIntrinsicColorAtSurfacePoint(const Point3D& surfacePoint) const override;
 
     // Description: Checks if the Sphere 'other' is equivalent to this Sphere.
 	bool operator==(const Sphere& other) const = default;
@@ -195,7 +173,8 @@ public:
 
 /** Cylinder */
 
-struct Cylinder : Object {
+class Cylinder : public Object {
+public:
 	Point3D center;
 	float radius;
 	Vector3D direction;
@@ -256,7 +235,8 @@ public:
 
 /** Triangle */
 
-struct Triangle : Object {
+class Triangle : public Object {
+public:
     Point3D vertexA;
     Point3D vertexB;
     Point3D vertexC;
@@ -364,31 +344,7 @@ public:
     }
 
     // Description: Refer to the Object struct.`
-    [[nodiscard]] ColorRGB
-    GetIntrinsicColorAtSurfacePoint(const Point3D& surfacePoint) const override
-    {
-        if (texturePath.empty() || !Textured())
-			return material.intrinsicColor;
-
-		float alpha = 0.f;
-		float beta = 0.f;
-		float gamma = 0.f;
-		if (!CalculateBarycentricCoordinates(surfacePoint, alpha, beta, gamma))
-			return {};
-
-		float u = (alpha * textureCoordinateA->u) + (beta * textureCoordinateB->u) + (gamma * textureCoordinateC->u);
-		float v = (alpha * textureCoordinateA->v) + (beta * textureCoordinateB->v) + (gamma * textureCoordinateC->v);
-
-		SharedTexture objectTexture;
-		if (!TextureCache::Instance().GetTexture(texturePath, objectTexture))
-			return {};
-
-		ColorRGB pixelOut;
-		if (!objectTexture->GetPixelWithTextureCoordinate(u, v, pixelOut))
-			return {};
-
-		return pixelOut;
-    }
+    [[nodiscard]] ColorRGB GetIntrinsicColorAtSurfacePoint(const Point3D& surfacePoint) const override;
 
     // Description: Checks if the Triangle 'other' is equivalent to this Triangle.
     bool operator==(const Triangle& other) const = default;
@@ -470,6 +426,4 @@ private:
 	}
 };
 
-
-
-#endif //ASSIGNMENT1B_LIGHTANDSHADOW_OBJECT_HPP
+#endif // OBJECT_H

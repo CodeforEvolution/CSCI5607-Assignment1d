@@ -24,6 +24,8 @@ ppm_writer_open(const char* outputFileName, PPMWriter* writer)
 	writer->width = writer->height = 0;
 	writer->maxColorValue = DEFAULT_MAX_COLOR_VALUE;
 
+	std::cout << "Final PPM file was written to: " << name << std::endl;
+
 	return true;
 }
 
@@ -48,7 +50,7 @@ ppm_writer_set_image_size(PPMWriter* writer, Size imageSize)
 }
 
 bool
-ppm_writer_write(PPMWriter* writer, const std::vector<ColorRGB>& pixels)
+ppm_writer_write(PPMWriter* writer, const std::vector<PixelInfo>& pixels)
 {
 	if (writer == nullptr || writer->outputFile == nullptr)
 		return false;
@@ -74,9 +76,9 @@ ppm_writer_write(PPMWriter* writer, const std::vector<ColorRGB>& pixels)
 	for (size_t index = 0; index < pixelCount; index++) {
 		// Limit to 70 characters per line, so we'll just print
 		result = fprintf(writer->outputFile, "%d %d %d\n",
-						 pixels[index].red,
-						 pixels[index].green,
-						 pixels[index].blue);
+						 pixels[index].pixel.red,
+						 pixels[index].pixel.green,
+						 pixels[index].pixel.blue);
 		if (result < 0) {
 			fprintf(stderr, "Failed to write pixel out...Error: %d\n", result);
 			return false;

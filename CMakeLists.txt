@@ -17,6 +17,13 @@ add_executable(raytracer1d
         src/core/TypeDefinitions.hpp
         src/core/Texture.hpp
         src/core/Texture.cpp
-        src/core/TextureCache.cpp
-        src/core/TextureCache.hpp
+        src/TextureCache.cpp
+        src/TextureCache.hpp
+        src/core/Ray.cpp
+        src/core/Ray.hpp
+        src/core/Vector3D.cpp
+        src/core/Vector3D.hpp
+        src/core/Point.hpp
+        src/core/ColorRGB.hpp
+        src/tests.hpp
 )

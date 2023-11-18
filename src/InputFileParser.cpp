@@ -210,7 +210,7 @@ InputFileParser::Parse(SceneDefinition& definition)
 
 			case TOKEN_BACKGROUND_COLOR:
 			{
-				if (!parse_background_color(currentLine, definition.backgroundColor, definition.refractionIndexBgColor)) {
+				if (!parse_background_color(currentLine, definition.backgroundColor, definition.backgroundRefractionIndex)) {
 					std::cerr << "Error: Failed to parse background color line: " << currentLine << std::endl;
 					return false;
 				}

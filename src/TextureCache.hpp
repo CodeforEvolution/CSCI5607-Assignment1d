@@ -1,7 +1,7 @@
 // Assignment 1c - Triangles and Textures
 // Work by Jacob Secunda
-#ifndef ASSIGNMENT1C_TRIANGLESANDTEXTURES_TEXTURECACHE_HPP
-#define ASSIGNMENT1C_TRIANGLESANDTEXTURES_TEXTURECACHE_HPP
+#ifndef TEXTURE_CACHE_H
+#define TEXTURE_CACHE_H
 
 #include <filesystem>
 #include <future>
@@ -9,7 +9,7 @@
 #include <memory>
 #include <mutex>
 
-#include "Texture.hpp"
+#include "core/Texture.hpp"
 
 class TextureCache {
 public:
@@ -45,5 +45,4 @@ private:
     bool LoadTextureFromPPM_(const std::filesystem::path& texturePath);
 };
 
-
-#endif //ASSIGNMENT1C_TRIANGLESANDTEXTURES_TEXTURECACHE_HPP
+#endif // TEXTURE_CACHE_H

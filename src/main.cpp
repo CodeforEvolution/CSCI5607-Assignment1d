@@ -1,129 +1,21 @@
 // Assignment 1c - Triangles and Textures
 // Work by Jacob Secunda
 
+#include <execution>
 #include <iostream>
 
 #include "GraphicsEngine.hpp"
 #include "InputFileParser.hpp"
 #include "PpmWriter.hpp"
 #include "core/Texture.hpp"
-#include "core/TextureCache.hpp"
+#include "TextureCache.hpp"
 #include "core/TypeDefinitions.hpp"
 
-#if 0
-void testViewWindow()
-{
-	Size imageSize = Size(100, 100);
-	ViewingWindow window{};
-	window.upperLeft = {-5, 5, 0};
-	window.upperRight = {5, 5, 0};
-	window.lowerLeft = {-5,-5,0};
-	window.lowerRight = {5,-5,0};
+#include "tests.hpp"
 
-	Point2D<uint32_t> point(33, 66);
 
-	Point3D mappedPoint = window.MapImagePixelToPoint(imageSize, point);
-	std::cout << "Mapped Point: " << mappedPoint << std::endl;
-}
-
-void testRaySphereIntersect()
-{
-	Ray ray{};
-	ray.origin = {0,0,0};
-	ray.direction = {0,0,-1};
-
-	Sphere sphere{};
-	sphere.center = {0,0,-10};
-	sphere.radius = 4;
-	Object object {};
-	object.type = ObjectType::OBJ_SPHERE;
-	object.properties.sphere = sphere;
-
-	std::optional<Point3D> intersection = ray.TestIntersection(object);
-
-	std::cout << "Intersection: " << intersection.value() << std::endl;
-}
-
-void testCoord()
-{
-	Point3D eyePos = {0,0,5};
-	Vector3D upDir = {0,1,0};
-	Vector3D viewDir = {0,0,-1};
-
-	CoordSys coordSys(viewDir, upDir);
-	std::cout << "u: " << coordSys.u << ", v: " << coordSys.v << std::endl;
-}
-
-void testIllumination()
-{
-	Point3D eyePos = {0,0,5};
-	Vector3D rayDirection = {0,0,-1};
-	Vector3D lightDirection = {0,-5,0};
-
-	Sphere sphere{};
-	sphere.center = {0,0,0};
-	sphere.radius = 2;
-
-	ColorRGB Od = {1.f,0.f,0.f};
-	ColorRGB Os = {1.f,1.f,1.f};
-	float ka = 0.1f;
-	float kd = 0.5f;
-	float ks = 0.2f;
-	float n  = 2;
-
-	Ray theRay{};
-	theRay.origin = eyePos;
-	theRay.direction = rayDirection;
-
-	MaterialProps props{};
-	props.intrinsicColor = Od;
-	props.specularHighlightColor = Os;
-	props.diffuseReflectionMagnitude = ka;
-	props.matteMagnitude = kd;
-	props.shinyMagnitude = ks;
-	props.specularHighlightFocus = n;
-
-	Object theObject{};
-	theObject.type = ObjectType::OBJ_SPHERE;
-	theObject.material = props;
-	theObject.properties.sphere = sphere;
-
-	std::vector<Object> objects;
-	objects.push_back(theObject);
-
-	std::optional<Point3D> intersection = theRay.TestIntersection(theObject);
-
-	Light light{};
-	light.color = {1.f,1.f,1.f};
-	light.lightType = LightType::DIRECTIONAL_LIGHT;
-	light.lightDirection = lightDirection;
-
-	std::vector<Light> lights;
-	lights.push_back(light);
-
-	ColorRGB finalColor = GraphicsEngine::ShadeWithRay(theRay, theObject, intersection.value(), lights, objects);
-	std::cout << "Shade Color: " << finalColor << std::endl;
-}
-#endif
-
-void
-test_triangle()
-{
-    Triangle triangle;
-    triangle.vertexA = Point3D(1, 0, 0);
-    triangle.vertexB = Point3D(0, 1, 0);
-    triangle.vertexC = Point3D(0, 0, 1);
-
-    Ray ray;
-    ray.origin = Point3D(0, 0, 0);
-    ray.direction = Vector3D(1.f/3, 2.f/3, 2.f/3);
-    ray.direction.NormalizeSelf();
-
-    std::optional<Point3D> maybeIntersection = triangle.IntersectWith(ray, nullptr);
-    std::cerr << "Intersection: " << *maybeIntersection << std::endl;
-}
-
-int main(int argc, char* argv[])
+int
+main(int argc, char* argv[])
 {
 	// Check arguments...
 	if (argc != 2) {
@@ -187,8 +79,21 @@ int main(int argc, char* argv[])
 	std::cout << "=== Creating Pixel Array ===" << std::endl;
 	const uint64_t pixelBufferSize = scene.imagePixelSize.width * scene.imagePixelSize.height;
 
-	std::vector<ColorRGB> pixelBuffer;
+	//using PixelInfo = std::tuple<ColorRGB, uint32_t, uint32_t>;
+	std::vector<PixelInfo> pixelBuffer;
 	pixelBuffer.resize(pixelBufferSize);
+
+	size_t currentPixelIndex = 0;
+	for (uint32_t currentY = 0; currentY < scene.imagePixelSize.height; currentY++) {
+		for (uint32_t currentX = 0; currentX < scene.imagePixelSize.width; currentX++) {
+			pixelBuffer[currentPixelIndex] = {{}, currentX, currentY};
+			currentPixelIndex++;
+		}
+	}
+
+
+//	std::vector<ColorRGB> pixelBuffer;
+//	pixelBuffer.resize(pixelBufferSize);
 
 	// (3) Define Viewing Window
 	std::cout << "=== Defining View Window ===" << std::endl;
@@ -201,27 +106,44 @@ int main(int argc, char* argv[])
 	wildRay.origin = scene.eyePosition;
 
 	// The depth to use!
-	constexpr uint32_t depthChoice = 3;
+	const uint32_t depthChoice = 2;
 
-	std::size_t currentPixelIndex = 0;
-	for (uint32_t currentY = 0; currentY < scene.imagePixelSize.height; currentY++) {
-		for (uint32_t currentX = 0; currentX < scene.imagePixelSize.width; currentX++) {
-			// Map the current pixel of the image to a point on the view window.
-			Point2D<uint32_t> currentPoint(currentX, currentY);
-			Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
-			// Point the ray towards the view window.
-			wildRay.SetDirectionVector(viewWindowPoint);
+	std::for_each(std::execution::par_unseq, pixelBuffer.begin(), pixelBuffer.end(), [&](PixelInfo& pixelInfo)  {
+//		ldiv_t result = std::ldiv(currentPixelIndex, scene.imagePixelSize.width)
+//		currentPixelIndex++;
+//
+//		uint32_t currentX = result.rem;
+//		uint32_t currentY = result.quot;
 
-			// Determine objects intersected by ray &
-			// which intersected object is closest to the camera!
-			pixelBuffer[currentPixelIndex] = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
-			currentPixelIndex++;
-		}
-	}
+		// Map the current pixel of the image to a point on the view window.
+		Point2D<uint32_t> currentPoint(pixelInfo.x, pixelInfo.y);
+		Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
+		// Point the ray towards the view window.
+		wildRay.SetDirectionFromIntersection(viewWindowPoint);
+
+		// Determine objects intersected by ray &
+		// which intersected object is closest to the camera!
+		pixelInfo.pixel = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
+	});
+
+//	for (uint32_t currentY = 0; currentY < scene.imagePixelSize.height; currentY++) {
+//		for (uint32_t currentX = 0; currentX < scene.imagePixelSize.width; currentX++) {
+//			// Map the current pixel of the image to a point on the view window.
+//			Point2D<uint32_t> currentPoint(currentX, currentY);
+//			Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
+//			// Point the ray towards the view window.
+//			wildRay.SetDirectionFromIntersection(viewWindowPoint);
+//
+//			// Determine objects intersected by ray &
+//			// which intersected object is closest to the camera!
+//			pixelBuffer[currentPixelIndex] = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
+//			currentPixelIndex++;
+//		}
+//	}
 
 	// Write out PPM File!
 	std::cout << "=== Writing Out PPM File ===" << std::endl;
-	PPMWriter writer;
+	PPMWriter writer{};
 
 	if (!ppm_writer_open(argv[1], &writer))
 		return EXIT_FAILURE;

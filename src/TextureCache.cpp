@@ -3,7 +3,6 @@
 
 #include "TextureCache.hpp"
 
-#include <charconv>
 #include <memory>
 #include <fstream>
 
@@ -61,7 +60,7 @@ TextureCache::LoadTexture(const std::filesystem::path& texturePath)
     if (HasTexture(texturePath))
         return true;
 
-    // Check for the texture in the "texture" subfolder
+    // Check for the texture in a "texture" subfolder
     std::filesystem::path actualTexturePath = kTextureSubfolder;
     actualTexturePath /= texturePath;
     if (!std::filesystem::exists(actualTexturePath)) {

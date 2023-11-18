@@ -1,7 +1,7 @@
 // Assignment 1c - Triangles and Textures
 // Work by Jacob Secunda
-#ifndef ASSIGNMENT1B_LIGHTANDSHADOW_PPMWRITER_HPP
-#define ASSIGNMENT1B_LIGHTANDSHADOW_PPMWRITER_HPP
+#ifndef PPM_WRITER_H
+#define PPM_WRITER_H
 
 #include <cstdio>
 #include <cstdint>
@@ -15,18 +15,18 @@ static const char* kPPMHeaderComment = "# PPM file created by Jacob Secunda's pr
 
 #define DEFAULT_MAX_COLOR_VALUE 255;
 
-typedef struct {
+struct PPMWriter {
 	FILE* outputFile;
 
 	uint32_t width;
 	uint32_t height;
 	uint32_t maxColorValue;
-} PPMWriter;
+};
 
 bool ppm_writer_open(const char* outputFileName, PPMWriter* writer);
 void ppm_writer_close(PPMWriter* writer);
 
 void ppm_writer_set_image_size(PPMWriter* writer, Size imageSize);
-bool ppm_writer_write(PPMWriter* writer, const std::vector<ColorRGB>& pixels);
+bool ppm_writer_write(PPMWriter* writer, const std::vector<PixelInfo>& pixels);
 
-#endif //ASSIGNMENT1B_LIGHTANDSHADOW_PPMWRITER_HPP
+#endif // PPM_WRITER_H

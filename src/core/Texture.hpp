@@ -1,10 +1,11 @@
 // Assignment 1c - Triangles and Textures
 // Work by Jacob Secunda
-#ifndef ASSIGNMENT1C_TRIANGLESANDTEXTURES_TEXTURE_HPP
-#define ASSIGNMENT1C_TRIANGLESANDTEXTURES_TEXTURE_HPP
+#ifndef TEXTURE_H
+#define TEXTURE_H
 
 #include <filesystem>
 
+#include "ColorRGB.hpp"
 #include "TypeDefinitions.hpp"
 
 class Texture {
@@ -43,4 +44,4 @@ private:
 
 MAKE_SHARED_NAME(Texture);
 
-#endif //ASSIGNMENT1C_TRIANGLESANDTEXTURES_TEXTURE_HPP
+#endif // TEXTURE_H

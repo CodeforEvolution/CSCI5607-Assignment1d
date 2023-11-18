@@ -1,10 +1,12 @@
 // Assignment 1c - Triangles and Textures
 // Work by Jacob Secunda
-#ifndef ASSIGNMENT1B_LIGHTANDSHADOW_LIGHT_HPP
-#define ASSIGNMENT1B_LIGHTANDSHADOW_LIGHT_HPP
+#ifndef LIGHT_H
+#define LIGHT_H
 
 #include "TypeDefinitions.hpp"
 #include "Object.hpp"
+#include "Ray.hpp"
+#include "Vector3D.hpp"
 
 /** Light **/
 
@@ -82,9 +84,11 @@ public:
 	[[nodiscard]] Ray
 	GenerateShadowRay(const Point3D& startPoint, const Vector3D& surfaceNormal) const override
 	{
+		static constexpr float kEpsilon = 0.001f;
+
 		Ray shadowRay;
         // Push start point out a bit from normal!
-		shadowRay.origin = startPoint + (surfaceNormal * 0.001f);
+		shadowRay.origin = startPoint + (surfaceNormal * kEpsilon);
 		shadowRay.direction = direction.Normalize();
 		shadowRay.direction *= -1.f;
 
@@ -171,4 +175,4 @@ public:
 	}
 };
 
-#endif //ASSIGNMENT1B_LIGHTANDSHADOW_LIGHT_HPP
+#endif // LIGHT_H

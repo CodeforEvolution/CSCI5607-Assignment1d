@@ -1,8 +1,7 @@
 // Assignment 1c - Triangles and Textures
 // Work by Jacob Secunda
-
-#ifndef ASSIGNMENT1B_LIGHTANDSHADOW_INPUTFILEPARSER_HPP
-#define ASSIGNMENT1B_LIGHTANDSHADOW_INPUTFILEPARSER_HPP
+#ifndef INPUT_FILE_PARSER_H
+#define INPUT_FILE_PARSER_H
 
 #include <cstdio>
 #include <filesystem>
@@ -55,5 +54,4 @@ private:
 	std::ifstream fInputFile;
 };
 
-
-#endif //ASSIGNMENT1B_LIGHTANDSHADOW_INPUTFILEPARSER_HPP
+#endif // INPUT_FILE_PARSER_H

@@ -1,7 +1,7 @@
 // Assignment 1c - Triangles and Textures
 // Work by Jacob Secunda
-#ifndef ASSIGNMENT1B_LIGHTANDSHADOW_GRAPHICSENGINE_HPP
-#define ASSIGNMENT1B_LIGHTANDSHADOW_GRAPHICSENGINE_HPP
+#ifndef GRAPHICS_ENGINE_H
+#define GRAPHICS_ENGINE_H
 
 #include <map>
 #include <unordered_map>
@@ -10,6 +10,7 @@
 #include "core/TypeDefinitions.hpp"
 #include "core/Light.hpp"
 #include "core/Object.hpp"
+#include "core/Vector3D.hpp"
 
 /** The Scene Definition **/
 
@@ -21,7 +22,7 @@ struct SceneDefinition {
 	float fovVertical;
 	Size imagePixelSize;
 	ColorRGB backgroundColor;
-	float refractionIndexBgColor;
+	float backgroundRefractionIndex;
 
 	float frustumHeight;
 
@@ -50,6 +51,7 @@ operator<<(std::ostream& out, const SceneDefinition& definition)
 	out << "Vertical Field Of View: " << definition.fovVertical << " degrees" << '\n';
 	out << "Image Size in Pixels: " << definition.imagePixelSize << '\n';
 	out << "Background Color: " << definition.backgroundColor << '\n';
+	out << "Background Refraction Index: " << definition.backgroundRefractionIndex << '\n';
 	out << "Objects: " << definition.objectList.size() << '\n';
 	for (const auto& object : definition.objectList) {
 		object->Print(out);
@@ -198,9 +200,8 @@ public:
 
     // Check GraphicsEngine.cpp for information!
 	static ColorRGB TraceWithRay(const Ray& ray, const SceneDefinition& scene, uint32_t depth = 0);
-	static float CalculateShadow(const Point3D& startPoint, const SharedLight& lightToCheck, const SharedObject& targetObject, const std::vector<SharedObject>& objects);
-	static ColorRGB ShadeWithRay(const Ray& ray, const SharedObject& objectHit, const Point3D& intersectionPoint, const SceneDefinition& scene, uint32_t depth = 0);
+	static float CalculateShadow(const Point3D& startPoint, const SharedLight& lightToCheck, const std::vector<SharedObject>& objects, const SharedObject& objectHit);
+	static ColorRGB ShadeWithRay(const Ray& ray, const Point3D& intersectionPoint, const SceneDefinition& scene, const SharedObject& objectHit, uint32_t depth = 0);
 };
 
-
-#endif //ASSIGNMENT1B_LIGHTANDSHADOW_GRAPHICSENGINE_HPP
+#endif // GRAPHICS_ENGINE_H
