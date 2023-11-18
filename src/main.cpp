@@ -1,8 +1,12 @@
 // Assignment 1c - Triangles and Textures
 // Work by Jacob Secunda
 
-#include <execution>
+//#include <parallel/algorithm>
+//#include <execution>
+
 #include <iostream>
+
+#include <omp.h>
 
 #include "GraphicsEngine.hpp"
 #include "InputFileParser.hpp"
@@ -12,7 +16,6 @@
 #include "core/TypeDefinitions.hpp"
 
 #include "tests.hpp"
-
 
 int
 main(int argc, char* argv[])
@@ -77,23 +80,19 @@ main(int argc, char* argv[])
 
 	// (2) Pixel Array Time!
 	std::cout << "=== Creating Pixel Array ===" << std::endl;
-	const uint64_t pixelBufferSize = scene.imagePixelSize.width * scene.imagePixelSize.height;
+	const size_t pixelBufferSize = scene.imagePixelSize.width * scene.imagePixelSize.height;
 
-	//using PixelInfo = std::tuple<ColorRGB, uint32_t, uint32_t>;
-	std::vector<PixelInfo> pixelBuffer;
-	pixelBuffer.resize(pixelBufferSize);
+	std::vector<PixelInfo> pixelBuffer(pixelBufferSize);
 
+	// Pre-populate the pixel array with information about the corresponding X and Y coordinate.
 	size_t currentPixelIndex = 0;
 	for (uint32_t currentY = 0; currentY < scene.imagePixelSize.height; currentY++) {
 		for (uint32_t currentX = 0; currentX < scene.imagePixelSize.width; currentX++) {
-			pixelBuffer[currentPixelIndex] = {{}, currentX, currentY};
+			pixelBuffer[currentPixelIndex].x = currentX;
+			pixelBuffer[currentPixelIndex].y = currentY;
 			currentPixelIndex++;
 		}
 	}
-
-
-//	std::vector<ColorRGB> pixelBuffer;
-//	pixelBuffer.resize(pixelBufferSize);
 
 	// (3) Define Viewing Window
 	std::cout << "=== Defining View Window ===" << std::endl;
@@ -108,38 +107,44 @@ main(int argc, char* argv[])
 	// The depth to use!
 	const uint32_t depthChoice = 2;
 
-	std::for_each(std::execution::par_unseq, pixelBuffer.begin(), pixelBuffer.end(), [&](PixelInfo& pixelInfo)  {
-//		ldiv_t result = std::ldiv(currentPixelIndex, scene.imagePixelSize.width)
-//		currentPixelIndex++;
+	// This does not run in multiple threads for some reason...
+//	std::for_each(pixelBuffer.begin(), pixelBuffer.end(), [&](auto& pixelInfo) {
+//		// Map the current pixel of the image to a point on the view window.
+//		Point2D<uint32_t> currentPoint(pixelInfo.x, pixelInfo.y);
+//		Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
+//		// Point the ray towards the view window.
+//		wildRay.SetDirectionFromIntersection(viewWindowPoint);
 //
-//		uint32_t currentX = result.rem;
-//		uint32_t currentY = result.quot;
+//		// Determine objects intersected by ray &
+//		// which intersected object is closest to the camera!
+//		pixelInfo.pixel = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
+//	});
 
-		// Map the current pixel of the image to a point on the view window.
-		Point2D<uint32_t> currentPoint(pixelInfo.x, pixelInfo.y);
-		Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
-		// Point the ray towards the view window.
-		wildRay.SetDirectionFromIntersection(viewWindowPoint);
-
-		// Determine objects intersected by ray &
-		// which intersected object is closest to the camera!
-		pixelInfo.pixel = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
-	});
-
-//	for (uint32_t currentY = 0; currentY < scene.imagePixelSize.height; currentY++) {
-//		for (uint32_t currentX = 0; currentX < scene.imagePixelSize.width; currentX++) {
-//			// Map the current pixel of the image to a point on the view window.
-//			Point2D<uint32_t> currentPoint(currentX, currentY);
-//			Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
-//			// Point the ray towards the view window.
-//			wildRay.SetDirectionFromIntersection(viewWindowPoint);
+//	for (auto& pixelInfo : pixelBuffer)
+//	{
+//		// Map the current pixel of the image to a point on the view window.
+//		Point2D<uint32_t> currentPoint(pixelInfo.x, pixelInfo.y);
+//		Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
+//		// Point the ray towards the view window.
+//		wildRay.SetDirectionFromIntersection(viewWindowPoint);
 //
-//			// Determine objects intersected by ray &
-//			// which intersected object is closest to the camera!
-//			pixelBuffer[currentPixelIndex] = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
-//			currentPixelIndex++;
-//		}
+//		pixelInfo.pixel = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
 //	}
+
+	#pragma omp parallel firstprivate(wildRay) shared(pixelBuffer)
+	{
+		#pragma omp for schedule(static)
+		for (auto& pixelInfo : pixelBuffer)
+		{
+			// Map the current pixel of the image to a point on the view window.
+			Point2D<uint32_t> currentPoint(pixelInfo.x, pixelInfo.y);
+			Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
+			// Point the ray towards the view window.
+			wildRay.SetDirectionFromIntersection(viewWindowPoint);
+
+			pixelInfo.pixel = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
+		}
+	}
 
 	// Write out PPM File!
 	std::cout << "=== Writing Out PPM File ===" << std::endl;

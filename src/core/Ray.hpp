@@ -18,6 +18,8 @@ public:
 
 public:
 	Ray();
+	Ray(const Ray& other);
+
 	virtual ~Ray() = default;
 
 	void SetDirectionFromIntersection(const Point3D& viewWindowIntersection);

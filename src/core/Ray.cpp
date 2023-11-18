@@ -11,6 +11,13 @@ Ray::Ray()
 {
 }
 
+Ray::Ray(const Ray& other)
+	:
+	origin(other.origin),
+	direction(other.direction)
+{
+}
+
 void
 Ray::SetDirectionFromIntersection(const Point3D& viewWindowIntersection)
 {

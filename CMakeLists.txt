@@ -3,6 +3,11 @@ project(Assignment1d_TransparencyAndMirrorReflections CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
+add_compile_options(-fopenmp)
+add_link_options(-fopenmp)
+#add_compile_definitions(-D_GLIBCXX_PARALLEL)
+#link_libraries(-lgomp)
+
 add_executable(raytracer1d
         src/GraphicsEngine.cpp
         src/GraphicsEngine.hpp
