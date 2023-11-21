@@ -364,15 +364,18 @@ private:
         float d22 = e2.DotProduct(e2);
 
         float determinant = (d11 * d22) - (d12 * d12);
-        if (std::fpclassify(determinant) == FP_ZERO)
-            return false;
+
+		// Check if determinant is zero, given some leeway!
+		const float kEpsilon = 0.001f;
+		if (std::fabs(determinant) < kEpsilon)
+			return false;
 
         float d1p = e1.DotProduct(ep);
         float d2p = e2.DotProduct(ep);
 
         beta = ((d22 * d1p) - (d12 * d2p)) / determinant;
         gamma = ((d11 * d2p) - (d12 * d1p)) / determinant;
-        alpha = 1.f - (beta + gamma);
+        alpha = 1.f - beta - gamma;
 
         return true;
     }

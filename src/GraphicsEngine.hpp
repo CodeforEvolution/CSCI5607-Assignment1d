@@ -199,9 +199,9 @@ public:
 	GraphicsEngine() = delete;
 
     // Check GraphicsEngine.cpp for information!
-	static ColorRGB TraceWithRay(const Ray& ray, const SceneDefinition& scene, uint32_t depth = 0);
+	static ColorRGB TraceWithRay(const Ray &ray, const SceneDefinition &scene, float previousRefractionIndex = 1.f, uint32_t depth = 0);
 	static float CalculateShadow(const Point3D& startPoint, const SharedLight& lightToCheck, const std::vector<SharedObject>& objects, const SharedObject& objectHit);
-	static ColorRGB ShadeWithRay(const Ray& ray, const Point3D& intersectionPoint, const SceneDefinition& scene, const SharedObject& objectHit, uint32_t depth = 0);
+	static ColorRGB ShadeWithRay(const Ray& ray, const Point3D& intersectionPoint, const SceneDefinition& scene, const SharedObject& objectHit, const float& previousRefractionIndex = 1.f, uint32_t depth = 0);
 };
 
 #endif // GRAPHICS_ENGINE_H

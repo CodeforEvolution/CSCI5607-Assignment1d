@@ -24,7 +24,8 @@ ppm_writer_open(const char* outputFileName, PPMWriter* writer)
 	writer->width = writer->height = 0;
 	writer->maxColorValue = DEFAULT_MAX_COLOR_VALUE;
 
-	std::cout << "Final PPM file was written to: " << name << std::endl;
+	std::cout << "Final PPM file is being written to: " << name << std::endl;
+	std::cout.flush();
 
 	return true;
 }

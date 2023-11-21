@@ -107,33 +107,9 @@ main(int argc, char* argv[])
 	// The depth to use!
 	const uint32_t depthChoice = 2;
 
-	// This does not run in multiple threads for some reason...
-//	std::for_each(pixelBuffer.begin(), pixelBuffer.end(), [&](auto& pixelInfo) {
-//		// Map the current pixel of the image to a point on the view window.
-//		Point2D<uint32_t> currentPoint(pixelInfo.x, pixelInfo.y);
-//		Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
-//		// Point the ray towards the view window.
-//		wildRay.SetDirectionFromIntersection(viewWindowPoint);
-//
-//		// Determine objects intersected by ray &
-//		// which intersected object is closest to the camera!
-//		pixelInfo.pixel = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
-//	});
-
-//	for (auto& pixelInfo : pixelBuffer)
-//	{
-//		// Map the current pixel of the image to a point on the view window.
-//		Point2D<uint32_t> currentPoint(pixelInfo.x, pixelInfo.y);
-//		Point3D viewWindowPoint = window.MapImagePixelToPoint(scene.imagePixelSize, currentPoint);
-//		// Point the ray towards the view window.
-//		wildRay.SetDirectionFromIntersection(viewWindowPoint);
-//
-//		pixelInfo.pixel = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
-//	}
-
-	#pragma omp parallel firstprivate(wildRay) shared(pixelBuffer)
+	#pragma omp parallel firstprivate(wildRay) shared(pixelBuffer) shared(window) shared(scene) default(none)
 	{
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(auto)
 		for (auto& pixelInfo : pixelBuffer)
 		{
 			// Map the current pixel of the image to a point on the view window.
@@ -142,7 +118,7 @@ main(int argc, char* argv[])
 			// Point the ray towards the view window.
 			wildRay.SetDirectionFromIntersection(viewWindowPoint);
 
-			pixelInfo.pixel = GraphicsEngine::TraceWithRay(wildRay, scene, depthChoice);
+			pixelInfo.pixel = GraphicsEngine::TraceWithRay(wildRay, scene, scene.backgroundRefractionIndex, depthChoice);
 		}
 	}
 
