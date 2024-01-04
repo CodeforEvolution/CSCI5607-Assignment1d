@@ -1,4 +1,4 @@
-// Assignment 1c - Triangles and Textures
+// Assignment 1d - Transparency and Mirror Reflections
 // Work by Jacob Secunda
 #ifndef GRAPHICS_ENGINE_H
 #define GRAPHICS_ENGINE_H

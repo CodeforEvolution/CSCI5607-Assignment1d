@@ -1,4 +1,4 @@
-// Assignment 1c - Triangles and Textures
+// Assignment 1d - Transparency and Mirror Reflections
 // Work by Jacob Secunda
 #ifndef OBJECT_H
 #define OBJECT_H

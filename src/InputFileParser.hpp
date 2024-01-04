@@ -1,4 +1,4 @@
-// Assignment 1c - Triangles and Textures
+// Assignment 1d - Transparency and Mirror Reflections
 // Work by Jacob Secunda
 #ifndef INPUT_FILE_PARSER_H
 #define INPUT_FILE_PARSER_H
@@ -43,7 +43,7 @@ private:
 	bool parse_material_properties(std::string_view line, MaterialProps& parsedMaterial);
 	bool parse_light(std::string_view line, std::unique_ptr<Light>& parsedLight);
 
-    // Assignment 1C
+    // Assignment 1c
     bool parse_vertex(std::string_view line, std::unique_ptr<Point3D>& parsedVertex);
     bool parse_triangle(std::string_view line, VertNormTextIndex& parsedA, VertNormTextIndex& parsedB, VertNormTextIndex& parsedC);
     bool parse_vertex_normal(std::string_view line, std::unique_ptr<Vector3D>& parsedVertexNormal);

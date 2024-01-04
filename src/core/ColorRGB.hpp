@@ -1,4 +1,4 @@
-// Assignment 1c - Triangles and Textures
+// Assignment 1d - Transparency and Mirror Reflections
 // Work by Jacob Secunda
 #ifndef COLOR_RGB_H
 #define COLOR_RGB_H
